@@ -2,11 +2,39 @@
 #define PARSER_H
 #include <string>
 #include <vector>
+#include <map>
 #include <cmath>
 #include <ctype.h>
 #include <cstring>
+#include <stdexcept>
 
 namespace iat {
+    enum class ParserErrorCode
+    {
+        INVALID_INPUT_EXPRESSION = 100,    //100"Invalid input expression"
+        CLOSED_PARENTHESIS_EXPECTED = 101, //101"Expected ')'"
+        DIVISION_BY_ZERO = 102,            //102"Division by zero!"
+        UNKNOWN_BINARY_OPERATOR = 103,     //103"Unknown binary operator"
+        ARGUMENT_OUT_OF_RANGE = 104,       //104"Argument out of range"
+        UNKNOWN_UNARY_OPERATOR = 105,      //105"Unknown unary operator"
+        UNKNOW_EXPRESSION_TYPE = 106,      //106"Unknown expression type"
+        UNBALANCED_PARENTHESIS = 107,      //107"Unbalanced parentethises"
+        UNKNOWN_ERROR = 200                //200"Unknown error"
+    };
+
+    class ErrorParser: public std::runtime_error
+    {
+    public:
+        explicit ErrorParser(): std::runtime_error("ErrorParser"),
+            _reason(ParserErrorCode::UNKNOWN_ERROR) {}
+        explicit ErrorParser(ParserErrorCode code):
+            std::runtime_error("ErrorParser"), _reason(code) {}
+        const char*  what() const throw() override;
+    private:
+        ParserErrorCode _reason;
+        static const std::map<ParserErrorCode, std::string> _parserErrors;
+        static std::map<ParserErrorCode, std::string> createMap();
+    };
 
     class Parser {
 

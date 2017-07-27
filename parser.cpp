@@ -1,4 +1,3 @@
-#include <QString>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -10,6 +9,33 @@
 #include <fstream>
 #include <sstream>
 #include "parser.h"
+#include <QString>
+
+const std::map<iat::ParserErrorCode, std::string> iat::ErrorParser::_parserErrors =
+      iat::ErrorParser::createMap();
+
+const char *iat::ErrorParser::what() const throw()
+{
+    std::ostringstream oss;
+    oss << std::runtime_error::what() << " (code: " << static_cast<int>(_reason) << "): " <<
+           _parserErrors.at(_reason) << std::endl;
+    return oss.str().c_str();
+}
+
+std::map<iat::ParserErrorCode, std::string> iat::ErrorParser::createMap()
+{
+    std::map<iat::ParserErrorCode, std::string> map;
+    map[ParserErrorCode::INVALID_INPUT_EXPRESSION] = "Invalid input expression";
+    map[ParserErrorCode::CLOSED_PARENTHESIS_EXPECTED] = "Expected ')'";
+    map[ParserErrorCode::DIVISION_BY_ZERO] = "Division by zero!";
+    map[ParserErrorCode::UNKNOWN_BINARY_OPERATOR] = "Unknown binary operator";
+    map[ParserErrorCode::ARGUMENT_OUT_OF_RANGE] = "Argument out of range";
+    map[ParserErrorCode::UNKNOWN_UNARY_OPERATOR] = "Unknown unary operator";
+    map[ParserErrorCode::UNKNOW_EXPRESSION_TYPE] = "Unknown expression type";
+    map[ParserErrorCode::UNBALANCED_PARENTHESIS] = "Unbalanced parentethises";
+    map[ParserErrorCode:: UNKNOWN_ERROR] = "Unknown error";
+    return map;
+}
 
 iat::Parser::Parser(const std::string &inputString, std::vector<std::pair<char,double>> vars):
        Parser(inputString, vars, "radian")
@@ -27,7 +53,7 @@ iat::Parser::Parser(const std::string &inputString, std::vector<std::pair<char,d
         if (s == ')') rightParentethisNumber++;
     }
     if(leftParentethisNumber != rightParentethisNumber)
-        throw std::runtime_error("Unbalanced parentethises") ;
+        throw ErrorParser(ParserErrorCode::UNBALANCED_PARENTHESIS);
     //Добавляем в вектор с парами = имя переменной - значение 3 константы
     //число ПИ, число Непера и константу золотого сечения
     m_vctVariables = vars;
@@ -95,10 +121,12 @@ std::string iat::Parser::parseToken()
 
 iat::Parser::Expression iat::Parser::parseUnaryExpression() {
     auto token = parseToken();
-    if (token.empty()) throw std::runtime_error("Invalid input expression");
+    if (token.empty())
+            throw ErrorParser(ParserErrorCode::INVALID_INPUT_EXPRESSION);
     if (token == "(") {
         auto result = parse();
-        if (parseToken() != ")") throw std::runtime_error("Expected ')'");
+        if (parseToken() != ")")
+            throw ErrorParser(ParserErrorCode::CLOSED_PARENTHESIS_EXPECTED);
         return result;
     }
     if (isdigit(token[0]))
@@ -148,8 +176,9 @@ double iat::Parser::evaluateExpression(const Expression &e)
         if (e.token == "/")
         {
             if(b != 0)
-            return a / b;
-            else throw std::runtime_error("Division by zero!");
+                return a / b;
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "**")
         {
@@ -158,8 +187,9 @@ double iat::Parser::evaluateExpression(const Expression &e)
         if (e.token == "mod")
         {
             if(b != 0)
-                 return (int)a % (int)b;
-            else throw std::runtime_error("Division by zero!");
+                return (int)a % (int)b;
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "<=") return a <= b ? 1 : 0;
         if (e.token == ">=") return a >= b ? 1 : 0;
@@ -170,7 +200,7 @@ double iat::Parser::evaluateExpression(const Expression &e)
         if (e.token == "&") return (a != 0 && b != 0) ? 1 : 0;
         if (e.token == "|") return (a != 0 || b != 0) ? 1 : 0;
         if (e.token == "^") return ((a != 0 && b == 0) || (a == 0 && b != 0)) ? 1 : 0;
-        throw std::runtime_error("Unknown binary operator");
+        throw ErrorParser(ParserErrorCode::UNKNOWN_BINARY_OPERATOR);
     }
     case 1: {
         auto a = evaluateExpression(e.args[0]);
@@ -195,73 +225,84 @@ double iat::Parser::evaluateExpression(const Expression &e)
         if (e.token == "ln")
         {
             if(a >= 0)
-                 return log(a);
-            else throw  std::runtime_error("argNameument is out of the function domen");
+                return log(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "log8")
         {
             if(a >= 0)
-                 return log10(a)/log10(8);
-            else throw  std::runtime_error("argNameument is out of the function domen");
+                return log10(a)/log10(8);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "log10")
         {
             if(a >= 0)
-                 return log10(a);
-            else throw  std::runtime_error("argNameument is out of the function domen");
+                return log10(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "log16")
         {
             if(a >= 0)
-                 return log10(a)/log10(16);
-            else throw  std::runtime_error("argNameument is out of the function domen");
+                return log10(a)/log10(16);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "log2")
         {
             if(a >= 0)
-                 return log2(a);
-            else throw  std::runtime_error("argNameument is out of the function domen");
+                return log2(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arcsh") return asinh(a);
         if (e.token == "arcch")
         {
             if(a >= 1)
-             return acosh(a);
-            else throw std::runtime_error("argNameument is out of the function domen");
+                return acosh(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arcth")
         {
             if(fabs(a) < 1)
-                 return atanh(a);
-            else throw std::runtime_error("argNameument is out of the function domen");
+                return atanh(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arccth")
         {
             if(a == 0)
-                throw std::runtime_error("Division by zero!");
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
             if(fabs(a) > 1)
                 return atanh(pow(a,-1));
-            else throw std::runtime_error("argNameument is out of the function domen");
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arcsech")
         {
             if(a != 0)
-                 return asinh(pow(a,-1));
-            else throw std::runtime_error("Division by zero!");
+                return asinh(pow(a,-1));
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "arccsech")
         {
             if(a == 0)
-               throw std::runtime_error("Division by zero!");
+               throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
             if(a <= 1)
-             return acosh(pow(a,-1));
-            else throw std::runtime_error("argNameument is out of the function domen");
+                return acosh(pow(a,-1));
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "sqrt")
         {
             if(a >= 0)
-                 return sqrt(a);
-            else throw std::runtime_error("Negative radicand!");
+                return sqrt(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "sin")
         {
@@ -293,7 +334,8 @@ double iat::Parser::evaluateExpression(const Expression &e)
                 if(m_angleUnit == "grad") return pow(tan(M_PI * a / 200), -1);
                 return pow(tan(a), -1);
             }
-            else throw std::runtime_error("Division by zero!");
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
 
         if (e.token == "csecans")
@@ -305,7 +347,8 @@ double iat::Parser::evaluateExpression(const Expression &e)
                 if(m_angleUnit == "grad") return pow(cos(M_PI * a / 200), -1);
                 return pow(cos(a), -1);
             }
-            else throw std::runtime_error("Division by zero!");
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "secans")
         {
@@ -315,38 +358,44 @@ double iat::Parser::evaluateExpression(const Expression &e)
                 if(m_angleUnit == "gradus") return pow(sin(M_PI * a / 180),-1);
                 if(m_angleUnit == "grad") return pow(sin(M_PI * a / 200), -1);
             }
-            else throw std::runtime_error("Division by zero!");
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "arcsin")
         {
             if(fabs(a) <= 1)
-                   return asin(a);
-            else throw std::runtime_error("argNameument is out of the function domen");
+                return asin(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arccos")
         {
             if(fabs(a) <= 1)
-                    return acos(a);
-            else throw std::runtime_error("argNameument is out of the function domen");
+                return acos(a);
+            else
+                throw ErrorParser(ParserErrorCode::ARGUMENT_OUT_OF_RANGE);
         }
         if (e.token == "arctg") return atan(a);
         if (e.token == "arcctg")
         {
             if(a != 0)
-                    return atan(1 / a);
-            else throw std::runtime_error("Division by zero!");
+                return atan(1 / a);
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "arcsecans")
         {
             if(a != 0)
-                    return asin(1 / a);
-            else throw std::runtime_error("Division by zero!");
+                return asin(1 / a);
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "arccsecans")
         {
             if(a != 0)
-                     return acos(1 / a);
-            else throw std::runtime_error("Division by zero!");
+                return acos(1 / a);
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "sh") return sinh(a);
         if (e.token == "ch") return cosh(a);
@@ -354,31 +403,33 @@ double iat::Parser::evaluateExpression(const Expression &e)
         if (e.token == "cth")
         {
             if(tanh(a) != 0)
-                      return pow(tanh(a),-1);
-            else throw std::runtime_error("Division by zero!");
+                return pow(tanh(a),-1);
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "sech")
         {
             if(sinh(a) != 0)
-                       return pow(sinh(a), -1);
-            else throw std::runtime_error("Division by zero!");
+                return pow(sinh(a), -1);
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
         if (e.token == "csech") return 1 / cosh(a);
         {
             if(cosh(a) != 0)
                 return pow(cosh(a), -1);
-            else throw std::runtime_error("Division by zero!");
+            else
+                throw ErrorParser(ParserErrorCode::DIVISION_BY_ZERO);
         }
-        throw std::runtime_error("Unknown unary operator");
+        throw ErrorParser(ParserErrorCode::UNKNOWN_UNARY_OPERATOR);
     }
     case 0:
     {
         QString resString = QString::fromStdString(e.token.c_str()); //For Qt
-        //return std::atof(e.token.c_str());
         return resString.toDouble();
     }
     }
-    throw std::runtime_error("Unknown expression type");
+    throw ErrorParser(ParserErrorCode::UNKNOW_EXPRESSION_TYPE);
 }
 
 double iat::Parser::calculateExpression()
@@ -391,3 +442,4 @@ unsigned long iat::Parser::factorial(unsigned int n)
 {
     return (n == 0 || n == 1)? 1 : n * factorial(n - 1);
 }
+

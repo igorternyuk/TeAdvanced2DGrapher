@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = TeAdvanced2DGrapher
 TEMPLATE = app
 
-DEFINES += DEBUG
+DEFINES -= DEBUG
 
 SOURCES += \
     chartviewwithzoom.cpp \

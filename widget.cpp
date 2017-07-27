@@ -259,6 +259,30 @@ Widget::~Widget()
     delete ui;
 }
 
+void Widget::keyPressEvent(QKeyEvent *event)
+{
+    int key = event->key();
+    if(key == Qt::Key_Return)
+    {
+        switch(ui->tabWidget->currentIndex())
+        {
+            case TAB_GRAPHICS :
+                on_pushButtonDrawGraficsExplicitFunc_clicked();
+                break;
+            case TAB_APPROXIMATION :
+                on_pushButtonApproximate_clicked();
+                break;
+            case TAB_DIAGRAMS :
+                on_pushButtonBuildDiagram_clicked();
+                break;
+        }
+    }
+    else if(key == Qt::Key_Q || key == Qt::Key_Escape)
+    {
+        close();
+    }
+}
+
 //Вспомогательные методы
 
 void Widget::setSpinners()
@@ -351,9 +375,9 @@ void Widget::appendTo(QStandardItemModel *model, double value) const
     }
 }
 
-void Widget::setValueTo(QStandardItemModel *model, unsigned int i, unsigned int j, double value) const
+void Widget::setValueTo(QStandardItemModel *model, int i, int j, double value) const
 {
-    if(i < model->rowCount() && j < model->columnCount())
+    if(i < int(model->rowCount()) && j < int(model->columnCount()))
     {
         model->setItem(i, j, new QStandardItem(QString::number(value,'f', ui->spinBoxApproxCoefPrec->value())));
         return;
@@ -529,9 +553,8 @@ void Widget::on_pushButtonDrawGraficsExplicitFunc_clicked()
     }
     catch (std::exception & e)
     {
-        QMessageBox box;
-        box.setText(e.what());
-        box.exec();
+        QMessageBox qmbx;
+        qmbx.critical(this, "Error", QString::fromStdString(e.what()));
     }
 }
 
@@ -786,7 +809,8 @@ void Widget::on_spinBoxGraficsNumberExplicitFunc_valueChanged(int arg1)
 
 void Widget::colorSlot()
 {
-    QColor color = QColorDialog::getColor(Qt::red, this, "Выберите цвет графика", QColorDialog::DontUseNativeDialog);
+    QColor color = QColorDialog::getColor(Qt::red, this, "Выберите цвет графика",
+                                          QColorDialog::DontUseNativeDialog);
     for(int i = 0; i < colorButtons.size(); ++i)
     {
         if(sender() == colorButtons[i])
@@ -1092,9 +1116,8 @@ void Widget::on_actionSetDiagramProperties_triggered()
         }
     catch (std::exception & e)
         {
-            QMessageBox box;
-            box.setText(e.what());
-            box.exec();
+            QMessageBox qmbx;
+            qmbx.critical(this, "Error", QString::fromStdString(e.what()));
         }
 }
 
@@ -1978,9 +2001,8 @@ void Widget::on_pushButtonBuildDiagram_clicked()
     }
     catch (std::exception & e)
     {
-        QMessageBox box;
-        box.setText(e.what());
-        box.exec();
+        QMessageBox qmbx;
+        qmbx.critical(this, "Error", QString::fromStdString(e.what()));
     }
 }
 
@@ -2006,9 +2028,8 @@ void Widget::on_spinBoxDiagramCategories_valueChanged(int arg1)
     }
     catch (std::exception & e)
     {
-        QMessageBox box;
-        box.setText(e.what());
-        box.exec();
+        QMessageBox qmbx;
+        qmbx.critical(this, "Error", QString::fromStdString(e.what()));
     }
 }
 
@@ -2044,9 +2065,8 @@ void Widget::on_spinBoxDiagramSets_valueChanged(int arg1)
     }
     catch (std::exception & e)
     {
-        QMessageBox box;
-        box.setText(e.what());
-        box.exec();
+        QMessageBox qmbx;
+        qmbx.critical(this, "Error", QString::fromStdString(e.what()));
     }
 }
 
@@ -2165,9 +2185,8 @@ void Widget::on_pushButtonLoadBarDiagramDataFromFile_clicked()
     }
     catch (std::exception & e)
     {
-        QMessageBox box;
-        box.setText(e.what());
-        box.exec();
+        QMessageBox qmbx;
+        qmbx.critical(this, "Error", QString::fromStdString(e.what()));
     }
 }
 

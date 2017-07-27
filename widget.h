@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QKeyEvent>
 #include <QDoubleSpinBox>
 #include <QComboBox>
 #include <QPushButton>
@@ -29,6 +30,8 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent = nullptr);
     ~Widget();
+protected:
+    void keyPressEvent(QKeyEvent *event);
 
 private slots:
     //Вспомогательные методы
@@ -40,7 +43,7 @@ private slots:
     void setItemText(QStandardItemModel *model, int i, int j, QString text) const;
     void appendTo(QStandardItemModel *model, QString coefName, double value) const;
     void appendTo(QStandardItemModel *model, double value) const;
-    void setValueTo(QStandardItemModel *model, unsigned int i, unsigned int j, double value) const;
+    void setValueTo(QStandardItemModel *model, int i, int j, double value) const;
     //Построение графиков явных функций
     void on_pushButtonDrawGraficsExplicitFunc_clicked();                       // Построить график явной функции
     void on_radioButtonExplicitFunc_toggled(bool);   // Y = F(X)
@@ -111,6 +114,7 @@ private slots:
     void changeTextColorOnDiagram();
 
 private:
+    enum {TAB_GRAPHICS = 0, TAB_APPROXIMATION = 1, TAB_DIAGRAMS = 2};
     Ui::Widget *ui;
     QStandardItemModel *pointsTable;
     QStandardItemModel *coefTable;
